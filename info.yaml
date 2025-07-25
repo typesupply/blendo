@@ -3,11 +3,11 @@ developer: Type Supply
 developerURL: http://typesupply.com
 launchAtStartUp: true
 mainScript: main.py
-version: 0.0.1
+version: 0.0.1b
 addToMenu:
 - path: menu_blendContours.py
   preferredName: Blend Contours
   shortKey: ""
 html: true
 requiresVersionMajor: '4'
-requiresVersionMinor: '5b'
+requiresVersionMinor: '5'
