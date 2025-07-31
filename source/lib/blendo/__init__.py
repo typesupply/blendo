@@ -1,16 +1,25 @@
 import math
 from fontParts.base.base import interpolate
 from fontParts.world import RGlyph
+from vanilla.dialogs import message
 import ezui
 from merz import MerzPen
 from mojo.UI import CurrentGlyphWindow
 from fontMath import MathGlyph
+try:
+    import prepolator
+    havePrepolator = True
+except ImportError:
+    havePrepolator = False
 
 extensionStub = "com.typesupply.Blendo."
 containerIdentifier = extensionStub + "container"
+debug = __name__ == "__main__"
 
 
 class BlendoController(ezui.WindowController):
+
+    debug = debug
 
     def build(self,
             glyph,
@@ -38,6 +47,9 @@ class BlendoController(ezui.WindowController):
         content = """
         = TwoColumnForm
 
+        : Target:
+        (X) Current Glyph @targetRadioButtons
+        ( ) Font Selectiom
 
         : Mode:
         (X) Step Count @modeRadioButtons
@@ -48,6 +60,12 @@ class BlendoController(ezui.WindowController):
 
         : Bias:
         --X-- [_ 0.5 _] @biasSlider
+
+        :
+        [X] Run Prepolator @runPrepolatorCheckbox
+
+        :
+        [X] Show Preview @showPreviewCheckbox
 
         =---=
 
@@ -69,19 +87,25 @@ class BlendoController(ezui.WindowController):
                 maxValue=1,
                 value=0.5,
                 tickMarks=3
+            ),
+            runPrepolatorCheckbox=dict(
+                value=havePrepolator
             )
         )
-        self.w = ezui.EZPopUp(
+        self.w = ezui.EZPanel(
             content=content,
             descriptionData=descriptionData,
             controller=self,
-            parent=self.editorWindow.getGlyphView()
+            title="Blendo",
+            activeItem="valueField"
         )
         self.editorContainer.setVisible(True)
+        self.w.getItem("runPrepolatorCheckbox").enable(havePrepolator)
         self.buildPaths()
 
     def started(self):
         self.w.open()
+        self.w.makeKey()
 
     def windowWillClose(self, sender):
         self.editorPathLayer.setPath(None)
@@ -125,7 +149,6 @@ class BlendoController(ezui.WindowController):
     def applyButtonCallback(self, sender):
         with self.glyph.undo("Blend"):
             self.glyph.appendGlyph(self.blendGlyph)
-        self.w.close()
 
 
 def biasedInterpolate(a, b, v, bias=0.5):
@@ -148,3 +171,27 @@ def makeMathGlyphFromContour(contour):
     glyph.width = 0
     contour.draw(glyph.getPen())
     return MathGlyph(glyph)
+
+
+# -----------------
+# External Function
+# -----------------
+
+def blendGlyphSelection():
+    glyph = CurrentGlyph()
+    error = True
+    if glyph is not None:
+        contours = glyph.selectedContours
+        if len(contours) == 2:
+            contour1, contour2 = contours
+            if len(contour1.segments) == len(contour2.segments):
+                BlendoController(glyph, contour1, contour2)
+                error = False
+    if error:
+        message(
+            messageText="Invalid contours for blending.",
+            informativeText="Please select two compatible contours."
+        )
+
+if __name__ == "__main__":
+    blendGlyphSelection()
