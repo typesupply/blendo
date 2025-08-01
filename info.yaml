@@ -5,9 +5,9 @@ launchAtStartUp: true
 mainScript: main.py
 version: 0.0.1b
 addToMenu:
-- path: menu_blendContours.py
-  preferredName: Blend Contours
+- path: menu_main.py
+  preferredName: Blendo
   shortKey: ""
 html: true
 requiresVersionMajor: '4'
-requiresVersionMinor: '5'
+requiresVersionMinor: '6b'
