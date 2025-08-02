@@ -319,8 +319,6 @@ class BlendoController(Subscriber, ezui.WindowController):
             if len(selectedGlyphs) != 2:
                 return None
             glyph1, glyph2 = selectedGlyphs
-            glyph1 = glyph1.copy()
-            glyph2 = glyph2.copy()
             compatible = getGlyphCompatibility(glyph1, glyph2)
             if not compatible:
                 return None
@@ -332,17 +330,15 @@ class BlendoController(Subscriber, ezui.WindowController):
         font.insertGlyph(glyph2, name="source2")
         glyph1 = font["source1"]
         glyph2 = font["source2"]
-        # XXX need to solve a traceback in Prepolator before shipping this
-        if debug:
-            if not any((haveSinglePoint, haveOpenContour)):
-                if all((havePrepolator, self.w.getItemValue("runPrepolatorCheckbox"))):
-                    group = prepolator.MakeCompatibilityGroup(
-                        model=glyph1,
-                        glyphs=(glyph2,)
-                    )
-                    group.strictOffCurves = False
-                    group.matchModel()
-                    del group
+        if not any((haveSinglePoint, haveOpenContour)):
+            if all((havePrepolator, self.w.getItemValue("runPrepolatorCheckbox"))):
+                group = prepolator.MakeCompatibilityGroup(
+                    model=glyph1.asDefcon(),
+                    glyphs=(glyph2.asDefcon(),)
+                )
+                group.strictOffCurves = False
+                group.matchModel()
+                del group
         mathGlyph1 = MathGlyph(glyph1)
         mathGlyph2 = MathGlyph(glyph2)
         blendMode = self.w.getItemValue("blendModeRadioButtons")
