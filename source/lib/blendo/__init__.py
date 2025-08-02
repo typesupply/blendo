@@ -33,8 +33,6 @@ try:
     havePrepolator = True
 except ImportError:
     havePrepolator = False
-if not debug:
-    havePrepolator = False
 
 extensionStub = "com.typesupply.Blendo."
 glyphEditorPreviewContainerIdentifier = extensionStub + "PreviewContainer"
@@ -114,6 +112,10 @@ class BlendoController(Subscriber, ezui.WindowController):
             activeItem="valueField"
         )
         self.w.getItem("runPrepolatorCheckbox").enable(havePrepolator)
+        # XXX new ezui feature
+        form = self.w.getItem("content")
+        if hasattr(form, "showGroup"):
+            form.showGroup("runPrepolatorCheckbox", havePrepolator)
 
     def started(self):
         for glyphEditor in AllGlyphWindows():
@@ -197,6 +199,7 @@ class BlendoController(Subscriber, ezui.WindowController):
         # XXX new ezui feature
         if hasattr(form, "showGroup"):
             form.showGroup("outputGlyphName", onOff)
+            form.showGroup("showPreviewCheckbox", not onOff)
             self.w.resizeToFitContent()
         self.updateGlyphEditorPreview()
 

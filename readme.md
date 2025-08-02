@@ -1,6 +1,6 @@
 # Blendo
 
-Blend between two contours.
+Blend between two glyphs, contours or sections of contours.
 
 ## Thanks!
 
