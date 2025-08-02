@@ -79,9 +79,11 @@ class BlendoController(Subscriber, ezui.WindowController):
 
         (Blend) @blendButton
         """
+        titleColumnWidth = 120
         itemColumnWidth = 150
         descriptionData = dict(
             content=dict(
+                titleColumnWidth=titleColumnWidth,
                 itemColumnWidth=itemColumnWidth
             ),
             outputGlyphName=dict(
@@ -114,11 +116,11 @@ class BlendoController(Subscriber, ezui.WindowController):
         self.w.getItem("runPrepolatorCheckbox").enable(havePrepolator)
 
     def started(self):
-        self.w.open()
-        self.w.makeKey()
         for glyphEditor in AllGlyphWindows():
             self.makeGlyphEditorPreviewLayers(glyphEditor)
         self.targetModeRadioButtonsCallback(None)
+        self.w.open()
+        self.w.makeKey()
 
     def windowWillClose(self, sender):
         for glyphEditor in AllGlyphWindows():
@@ -195,6 +197,7 @@ class BlendoController(Subscriber, ezui.WindowController):
         # XXX new ezui feature
         if hasattr(form, "showGroup"):
             form.showGroup("outputGlyphName", onOff)
+            self.w.resizeToFitContent()
         self.updateGlyphEditorPreview()
 
     def blendModeRadioButtonsCallback(self, sender):
@@ -203,6 +206,7 @@ class BlendoController(Subscriber, ezui.WindowController):
         # XXX new ezui feature
         if hasattr(form, "showGroup"):
             form.showGroup("biasSlider", onOff)
+            self.w.resizeToFitContent()
         self.updateGlyphEditorPreview()
 
     def valueFieldCallback(self, sender):
