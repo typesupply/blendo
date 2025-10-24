@@ -79,8 +79,10 @@ class BlendoController(Subscriber, ezui.WindowController):
         : Bias:
         --X-- [_ 0.5 _] @biasSlider
 
-        : Direction:
-        [ ] Alternate @alternateContourDirectionCheckbox
+        : Path Direction:
+        (X) Unchanged @contourDirectionModeRadioButtons
+        ( ) Same
+        ( ) Alternate
 
         ---
 
@@ -196,6 +198,16 @@ class BlendoController(Subscriber, ezui.WindowController):
         return modes[mode]
 
     @property
+    def contourDirectionMode(self):
+        modes = {
+            0 : "unchanged",
+            1 : "same",
+            2 : "alternate"
+        }
+        mode = self.w.getItemValue("contourDirectionModeRadioButtons")
+        return modes[mode]
+
+    @property
     def font(self):
         return CurrentFont()
 
@@ -246,7 +258,7 @@ class BlendoController(Subscriber, ezui.WindowController):
         if hasattr(form, "showGroup"):
             form.showGroup("outputGlyphName", inFontMode)
             form.showGroup("showPreviewCheckbox", inGlyphMode)
-            form.showGroup("alternateContourDirectionCheckbox", inGlyphMode)
+            form.showGroup("contourDirectionModeRadioButtons", inGlyphMode)
             self.w.resizeToFitContent()
         self.updateGlyphEditorPreview()
 
@@ -283,7 +295,7 @@ class BlendoController(Subscriber, ezui.WindowController):
     def biasSliderCallback(self, sender):
         self.updateGlyphEditorPreview()
 
-    def alternateContourDirectionCheckboxCallback(self, sender):
+    def contourDirectionModeRadioButtonsCallback(self, sender):
         self.updateGlyphEditorPreview()
 
     def runPrepolatorCheckboxCallback(self, sender):
@@ -457,17 +469,18 @@ class BlendoController(Subscriber, ezui.WindowController):
             final.name = "blendGlyph"
             glyph = glyph.extractGlyph(final.asDefcon())
             glyphs.append(glyph)
-        # only do the alternating when producing final
-        # outlines because it modifies the sources.
+        # only do the contour direction changes when producing
+        # final outlines because it modifies the sources.
         if not dryRun:
-            alternateContourDirection = self.w.getItemValue("alternateContourDirectionCheckbox")
-            if alternateContourDirection:
+            contourDirectionMode = self.contourDirectionMode
+            if contourDirectionMode != "unchanged":
                 selectedContours = self.glyph.selectedContours
-                contoursToAlternate = [selectedContours[0]] + [glyph[0] for glyph in glyphs] + [selectedContours[1]]
-                direction = contoursToAlternate[0].clockwise
-                for contour in contoursToAlternate:
+                contours = [selectedContours[0]] + [glyph[0] for glyph in glyphs] + [selectedContours[1]]
+                direction = contours[0].clockwise
+                for contour in contours:
                     contour.clockwise = direction
-                    direction = not direction
+                    if contourDirectionMode == "alternate":
+                        direction = not direction
         return glyphs
 
 

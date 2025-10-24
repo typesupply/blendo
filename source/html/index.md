@@ -10,13 +10,17 @@ Blend between two glyphs, contours or contour selections. Compatibility is requi
 
 ### Mode
 
-**Step Count** This will create the number of specified steps. The “Bias” slider allows you to influence the distribution of the blends.
+**Count** This will create the number of specified steps. The “Bias” slider allows you to influence the distribution of the blends.
 
 **Distance** This will let you specify the distance between blend steps. The number of blends will be automatically counted by measuring the distance between the sources. *Hey, that sounds vague! What is the “distances between the sources”?* Good question. The distance is measured by looking at glyph widths, glyph bounding boxes and contour start points. If all of those are the same the distance can’t be calculated and the distance will fallback to a value of 1. This may improve over time. [Check the source code if you really want to know.](https://github.com/typesupply/blendo)
 
+**Locations** This will let you specify interpolation locations between the targets. The values must be in the range 0-1.0 and you must have at least one value.
+
+**Deltas** This will let you specify distances between blend steps. These values are relative to the start of the target, not the previous step.
+
 ### Options
 
-**Contour Direction** Checking “Alternate” will alternate the contour direction of the blended contours. This may change the direction of the source contours. This option is only available when blending contours in the current glyph.
+**Contour Direction** This will let you specify the contour direction of the blended contours. “Unchanged” will leave them unchanged. “Same” will make all contours match the first source contour. “Alternate” will alternate the directions of the contours. These options are only available when blending contours in the current glyph.
 
 **Run Prepolator** This will let you run a Prepolator 2 match on the sources before blending. This option won’t be available if you don’t have the Prepolator 2 extension installed.
 
@@ -28,6 +32,12 @@ Press this button to execute the blend. If the blend is not possible due to sour
 
 
 ## Change Log
+
+### 0.2
+
+- Added new blend modes.
+- Added contour direction options.
+- Fixed the preview not updating when “Run Prepolator” was toggled.
 
 ### 0.1
 
