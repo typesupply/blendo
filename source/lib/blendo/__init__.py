@@ -68,6 +68,11 @@ class BlendoController(Subscriber, ezui.WindowController):
         : Bias:
         --X-- [_ 0.5 _] @biasSlider
 
+        : Contour Direction:
+        [ ] Alternate @alternateContourDirectionCheckbox
+
+        ---
+
         :
         [X] Run Prepolator @runPrepolatorCheckbox
         :
@@ -194,12 +199,14 @@ class BlendoController(Subscriber, ezui.WindowController):
     # ---------
 
     def targetModeRadioButtonsCallback(self, sender):
-        onOff = self.targetMode == "fontSelection"
+        inFontMode = self.targetMode == "fontSelection"
+        inGlyphMode = not inFontMode
         form = self.w.getItem("content")
         # XXX new ezui feature
         if hasattr(form, "showGroup"):
-            form.showGroup("outputGlyphName", onOff)
-            form.showGroup("showPreviewCheckbox", not onOff)
+            form.showGroup("outputGlyphName", inFontMode)
+            form.showGroup("showPreviewCheckbox", inGlyphMode)
+            form.showGroup("alternateContourDirectionCheckbox", inGlyphMode)
             self.w.resizeToFitContent()
         self.updateGlyphEditorPreview()
 
@@ -218,11 +225,14 @@ class BlendoController(Subscriber, ezui.WindowController):
     def biasSliderCallback(self, sender):
         self.updateGlyphEditorPreview()
 
+    def alternateContourDirectionCheckboxCallback(self, sender):
+        self.updateGlyphEditorPreview()
+
     def showPreviewCheckboxCallback(self, sender):
         self.updateGlyphEditorPreview()
 
     def blendButtonCallback(self, sender):
-        glyphs = self.buildGlyphs()
+        glyphs = self.buildGlyphs(dryRun=False)
         targetMode = self.targetMode
         if targetMode == "currentGlyph":
             if not glyphs:
@@ -304,7 +314,7 @@ class BlendoController(Subscriber, ezui.WindowController):
     # Builder
     # -------
 
-    def buildGlyphs(self):
+    def buildGlyphs(self, dryRun=True):
         targetMode = self.targetMode
         if targetMode == "currentGlyph":
             glyph = self.glyph
@@ -368,6 +378,17 @@ class BlendoController(Subscriber, ezui.WindowController):
             final.name = "blendGlyph"
             glyph = glyph.extractGlyph(final.asDefcon())
             glyphs.append(glyph)
+        # only do the alternating when producing final
+        # outlines because it modifies the sources.
+        if not dryRun:
+            alternateContourDirection = self.w.getItemValue("alternateContourDirectionCheckbox")
+            if alternateContourDirection:
+                selectedContours = self.glyph.selectedContours
+                contoursToAlternate = [selectedContours[0]] + [glyph[0] for glyph in glyphs] + [selectedContours[1]]
+                direction = contoursToAlternate[0].clockwise
+                for contour in contoursToAlternate:
+                    contour.clockwise = direction
+                    direction = not direction
         return glyphs
 
 
