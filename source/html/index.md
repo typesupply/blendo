@@ -16,6 +16,8 @@ Blend between two glyphs, contours or contour selections. Compatibility is requi
 
 ### Options
 
+**Contour Direction** Checking “Alternate” will alternate the contour direction of the blended contours. This may change the direction of the source contours. This option is only available when blending contours in the current glyph.
+
 **Run Prepolator** This will let you run a Prepolator 2 match on the sources before blending. This option won’t be available if you don’t have the Prepolator 2 extension installed.
 
 **Show Preview** This will show a preview of the blend when the target is “Current Glyph.”

@@ -59,16 +59,27 @@ class BlendoController(Subscriber, ezui.WindowController):
         [_ _] @outputGlyphName
 
         : Mode:
-        (X) Step Count @blendModeRadioButtons
+        (X) Count @blendModeRadioButtons
         ( ) Distance
+        ( ) Locations
+        ( ) Deltas
 
-        :
-        [_ 10 _](±) @valueField
+        : Count:
+        [_ 10 _](±) @countValueField
+
+        : Distance:
+        [_ 10 _](±) @distanceValueField
+
+        : Locations:
+        [_ 0.2 0.8 _] @locationsValueField
+
+        : Deltas:
+        [_ 5 10 _] @deltasValueField
 
         : Bias:
         --X-- [_ 0.5 _] @biasSlider
 
-        : Contour Direction:
+        : Direction:
         [ ] Alternate @alternateContourDirectionCheckbox
 
         ---
@@ -84,6 +95,7 @@ class BlendoController(Subscriber, ezui.WindowController):
         """
         titleColumnWidth = 120
         itemColumnWidth = 150
+        valueFieldWidth = 35
         descriptionData = dict(
             content=dict(
                 titleColumnWidth=titleColumnWidth,
@@ -92,12 +104,35 @@ class BlendoController(Subscriber, ezui.WindowController):
             outputGlyphName=dict(
                 placeholder=fallbackOutputGlyphName
             ),
-            valueField=dict(
+            countValueField=dict(
                 valueType="integer",
                 minValue=1,
                 maxValue=999,
                 value=5,
-                textFieldWidth=35,
+                textFieldWidth=valueFieldWidth,
+            ),
+            distanceValueField=dict(
+                valueType="integer",
+                minValue=1,
+                maxValue=999,
+                value=10,
+                textFieldWidth=valueFieldWidth,
+            ),
+            locationsValueField=dict(
+                valueType="floatList",
+                minValue=0,
+                maxValue=1.0,
+                minValueListItems=1,
+                value=[0.2, 0.8],
+                # textFieldWidth=itemColumnWidth,
+            ),
+            deltasValueField=dict(
+                valueType="integerList",
+                minValue=1,
+                maxValue=999,
+                minValueListItems=1,
+                value=[5, 10],
+                # textFieldWidth=itemColumnWidth,
             ),
             biasSlider=dict(
                 minValue=0,
@@ -114,12 +149,15 @@ class BlendoController(Subscriber, ezui.WindowController):
             descriptionData=descriptionData,
             controller=self,
             title="Blendo",
-            activeItem="valueField"
+            activeItem="countValueField"
         )
         self.w.getItem("runPrepolatorCheckbox").enable(havePrepolator)
         # XXX new ezui feature
         form = self.w.getItem("content")
         if hasattr(form, "showGroup"):
+            form.showGroup("distanceValueField", False)
+            form.showGroup("locationsValueField", False)
+            form.showGroup("deltasValueField", False)
             form.showGroup("runPrepolatorCheckbox", havePrepolator)
 
     def started(self):
@@ -149,8 +187,10 @@ class BlendoController(Subscriber, ezui.WindowController):
     @property
     def blendMode(self):
         modes = {
-            0 : "steps",
+            0 : "count",
             1 : "distance",
+            2 : "locations",
+            3 : "deltas",
         }
         mode = self.w.getItemValue("blendModeRadioButtons")
         return modes[mode]
@@ -211,15 +251,33 @@ class BlendoController(Subscriber, ezui.WindowController):
         self.updateGlyphEditorPreview()
 
     def blendModeRadioButtonsCallback(self, sender):
-        onOff = self.blendMode == "steps"
+        blendMode = self.blendMode
+        countValueFieldOnOff = blendMode == "count"
+        distanceValueFieldOnOff = blendMode == "distance"
+        locationsValueFieldOnOff = blendMode == "locations"
+        deltasValueFieldOnOff = blendMode == "deltas"
+        biasSliderOnOff = blendMode == "count"
         form = self.w.getItem("content")
         # XXX new ezui feature
         if hasattr(form, "showGroup"):
-            form.showGroup("biasSlider", onOff)
+            form.showGroup("countValueField", countValueFieldOnOff)
+            form.showGroup("distanceValueField", distanceValueFieldOnOff)
+            form.showGroup("locationsValueField", locationsValueFieldOnOff)
+            form.showGroup("deltasValueField", deltasValueFieldOnOff)
+            form.showGroup("biasSlider", biasSliderOnOff)
             self.w.resizeToFitContent()
         self.updateGlyphEditorPreview()
 
-    def valueFieldCallback(self, sender):
+    def countValueFieldCallback(self, sender):
+        self.updateGlyphEditorPreview()
+
+    def distanceValueFieldCallback(self, sender):
+        self.updateGlyphEditorPreview()
+
+    def locationsValueFieldCallback(self, sender):
+        self.updateGlyphEditorPreview()
+
+    def deltasValueFieldCallback(self, sender):
         self.updateGlyphEditorPreview()
 
     def biasSliderCallback(self, sender):
@@ -357,26 +415,44 @@ class BlendoController(Subscriber, ezui.WindowController):
                 del group
         mathGlyph1 = MathGlyph(glyph1)
         mathGlyph2 = MathGlyph(glyph2)
-        blendMode = self.w.getItemValue("blendModeRadioButtons")
-        count = self.w.getItemValue("valueField")
-        if blendMode == 1:
-            distance = calcDistanceBetweenGlyphs(glyph1, glyph2)
-            if not distance:
+        distance = calcDistanceBetweenGlyphs(glyph1, glyph2)
+        if not distance:
+            return None
+        blendMode = self.blendMode
+        bias = 0.5
+        if blendMode in ("count", "distance"):
+            if blendMode == "count":
+                count = self.w.getItemValue("countValueField")
+                locations = [v / (count + 1) for v in range(1, count + 1)]
+            elif blendMode == "distance":
+                stepDistance = self.w.getItemValue("distanceValueField")
+                count = math.ceil(distance / stepDistance)
+                bias = self.w.getItemValue("biasSlider")
+                locations = [v / count for v in range(1, count)]
+        elif blendMode == "locations":
+            locations = self.w.getItemValue("locationsValueField")
+            if not locations:
                 return None
-            bias = 0.5
-            count = math.ceil(distance / count)
-        else:
-            bias = self.w.getItemValue("biasSlider")
-            count += 1
+        elif blendMode == "deltas":
+            deltas = self.w.getItemValue("deltasValueField")
+            if not deltas:
+                return None
+            locations = [d / distance for d in deltas]
         glyphs = []
-        for v in range(1, count):
-            v /= count
-            glyph = biasedInterpolate(
-                mathGlyph1,
-                mathGlyph2,
-                v,
-                bias
-            )
+        for v in locations:
+            if bias == 0.5:
+                glyph = interpolate(
+                    mathGlyph1,
+                    mathGlyph2,
+                    v
+                )
+            else:
+                glyph = biasedInterpolate(
+                    mathGlyph1,
+                    mathGlyph2,
+                    v,
+                    bias
+                )
             final = RGlyph()
             final.name = "blendGlyph"
             glyph = glyph.extractGlyph(final.asDefcon())
