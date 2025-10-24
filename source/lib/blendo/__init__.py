@@ -228,6 +228,9 @@ class BlendoController(Subscriber, ezui.WindowController):
     def alternateContourDirectionCheckboxCallback(self, sender):
         self.updateGlyphEditorPreview()
 
+    def runPrepolatorCheckboxCallback(self, sender):
+        self.updateGlyphEditorPreview()
+
     def showPreviewCheckboxCallback(self, sender):
         self.updateGlyphEditorPreview()
 
