@@ -16,7 +16,7 @@ Blend between two glyphs, contours or contour selections. Compatibility is requi
 
 **Locations** This will let you specify interpolation locations between the targets. The values must be in the range 0-1.0 and you must have at least one value.
 
-**Deltas** This will let you specify distances between blend steps. These values are relative to the start of the target, not the previous step.
+**Deltas** This will let you specify distances between blend steps. These values are relative to the start of the targets, not the previous step. If a value is negative, it is relative to the end of the targets.
 
 ### Options
 

@@ -74,7 +74,7 @@ class BlendoController(Subscriber, ezui.WindowController):
         [_ 0.2 0.8 _] @locationsValueField
 
         : Deltas:
-        [_ 5 10 _] @deltasValueField
+        [_ 10 -10 _] @deltasValueField
 
         : Bias:
         --X-- [_ 0.5 _] @biasSlider
@@ -125,16 +125,14 @@ class BlendoController(Subscriber, ezui.WindowController):
                 minValue=0,
                 maxValue=1.0,
                 minValueListItems=1,
-                value=[0.2, 0.8],
-                # textFieldWidth=itemColumnWidth,
+                value=[0.2, 0.8]
             ),
             deltasValueField=dict(
                 valueType="integerList",
-                minValue=1,
+                minValue=-999,
                 maxValue=999,
                 minValueListItems=1,
-                value=[5, 10],
-                # textFieldWidth=itemColumnWidth,
+                value=[10, -10]
             ),
             biasSlider=dict(
                 minValue=0,
@@ -449,7 +447,11 @@ class BlendoController(Subscriber, ezui.WindowController):
             deltas = self.w.getItemValue("deltasValueField")
             if not deltas:
                 return None
-            locations = [d / distance for d in deltas]
+            locations = []
+            for d in deltas:
+                if d < 0:
+                    d = distance + d
+                locations.append(d / distance)
         glyphs = []
         for v in locations:
             if bias == 0.5:
